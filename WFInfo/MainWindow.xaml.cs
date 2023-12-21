@@ -14,6 +14,7 @@ using System.Windows.Media;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using WFInfo.Settings;
+using WFInfo.Services.EncryptedData;
 
 namespace WFInfo
 {
@@ -30,10 +31,15 @@ namespace WFInfo
         private RelicsWindow _relicsWindow = new RelicsWindow();
         private SettingsViewModel _settingsViewModel = SettingsViewModel.Instance;
 
-        public MainWindow()
+        private readonly IEncryptedDataService _encryptedData;
+
+        public MainWindow(IServiceProvider services, IEncryptedDataService encryptedData)
         {
             INSTANCE = this;
-            main = new Main();
+
+            _encryptedData = encryptedData;
+
+            main = new Main(services);
             listener = new LowLevelListener(); //publisher
             try
             {
@@ -115,7 +121,7 @@ namespace WFInfo
 
             SettingsWindow.Save();
 
-            Main.dataBase.JWT = EncryptedDataService.LoadStoredJWT();
+            Main.dataBase.JWT = _encryptedData.LoadStoredJWT();
 
         }
 
@@ -161,7 +167,7 @@ namespace WFInfo
             NotifyIcon.Dispose();
             if (Main.dataBase.rememberMe)
             { // if rememberme was checked then save it
-                EncryptedDataService.PersistJWT(Main.dataBase.JWT);
+                _encryptedData.PersistJWT(Main.dataBase.JWT);
             }
             Application.Current.Shutdown();
         }

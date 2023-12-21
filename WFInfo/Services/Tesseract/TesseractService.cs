@@ -5,43 +5,14 @@ using Newtonsoft.Json.Linq;
 using Tesseract;
 using WFInfo.Settings;
 
-namespace WFInfo
+namespace WFInfo.Services.Tesseract
 {
-    public interface ITesseractService
-    {
-        /// <summary>
-        /// Inventory/Profile engine
-        /// </summary>
-        TesseractEngine FirstEngine { get; }
-
-        /// <summary>
-        /// Second slow pass engine
-        /// </summary>
-        TesseractEngine SecondEngine { get; }
-
-        /// <summary>
-        /// Engines for parallel processing the reward screen and snapit
-        /// </summary>
-        TesseractEngine[] Engines { get; }
-
-        void Init();
-        void ReloadEngines();
-    }
-
     /// <summary>
     /// Holds all the TesseractEngine instances and is responsible for loadind/reloading them
     /// They are all configured in the same way
     /// </summary>
     public class TesseractService : ITesseractService
     {
-        /// <summary>
-        /// Inventory/Profile engine
-        /// </summary>
-        public TesseractEngine FirstEngine { get; private set; }
-        /// <summary>
-        /// Second slow pass engine
-        /// </summary>
-        public TesseractEngine SecondEngine { get; private set; }
         /// <summary>
         /// Engines for parallel processing the reward screen and snapit
         /// </summary>
@@ -54,20 +25,13 @@ namespace WFInfo
 
         public TesseractService()
         {
-            getLocaleTessdata();
-            FirstEngine = CreateEngine();
-            SecondEngine = CreateEngine();
+            ReloadEngines();
         }
 
         private TesseractEngine CreateEngine() => new TesseractEngine(DataPath, Locale)
         {
             DefaultPageSegMode = PageSegMode.SingleBlock
         };
-        
-        public void Init()
-        {
-            LoadEngines();
-        }
 
         private void LoadEngines()
         {
@@ -80,14 +44,11 @@ namespace WFInfo
 
         public void ReloadEngines()
         {
-            getLocaleTessdata();
+            GetLocaleTessdata();
             LoadEngines();
-            FirstEngine?.Dispose();
-            FirstEngine = CreateEngine();
-            SecondEngine?.Dispose();
-            SecondEngine = CreateEngine();
         }
-        private void getLocaleTessdata()
+
+        private void GetLocaleTessdata()
         {
             string traineddata_hotlink_prefix = "https://raw.githubusercontent.com/WFCD/WFinfo/libs/tessdata/";
             JObject traineddata_checksums = new JObject

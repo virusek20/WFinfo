@@ -20,6 +20,9 @@ using WFInfo.Services;
 using WFInfo.Services.HDRDetection;
 using System.Linq;
 using Windows.Foundation.Metadata;
+using WFInfo.Services.Tesseract;
+using WFInfo.Services.SoundPlayer;
+using System.Media;
 
 namespace WFInfo
 {
@@ -54,21 +57,19 @@ namespace WFInfo
         private static string LastMarketStatus { get; set; } = "invisible";
         private static string LastMarketStatusB4AFK { get; set; } = "invisible";
 
-        // Main service provider
-        // TODO: Move to CustomEntryPoint
-        private IServiceProvider _services;
-
         // Instance services
         private IReadOnlyApplicationSettings _settings;
         private IProcessFinder _process;
         private IWindowInfoService _windowInfo;
         private IHDRDetectorService _detector;
+        private ITesseractService _tesseract;
+        private ISoundPlayer _soundPlayer;
 
         // See comment on Ocr.Init for explanation
         private GdiScreenshotService _gdiScreenshot;
         private WindowsCaptureScreenshotService _windowsScreenshot;
 
-        public Main()
+        public Main(IServiceProvider services)
         {
             INSTANCE = this;
             StartMessage();
@@ -76,29 +77,10 @@ namespace WFInfo
 
             AutoUpdater.CheckForUpdateEvent += AutoUpdaterOnCheckForUpdateEvent;
             AutoUpdater.Start("https://github.com/WFCD/WFinfo/releases/latest/download/update.xml");
-
-            _services = ConfigureServices(new ServiceCollection()).BuildServiceProvider();
-            InitializeLegacyServices(_services);
+            
+            InitializeLegacyServices(services);
 
             Task.Factory.StartNew(ThreadedDataLoad);
-        }
-
-        private IServiceCollection ConfigureServices(IServiceCollection services)
-        {
-            services.AddSingleton(ApplicationSettings.GlobalReadonlySettings);
-            services.AddProcessFinder();
-            services.AddWin32WindowInfo();
-            services.AddHDRDetection();
-
-            services.AddGDIScreenshots();
-
-            // Only add windows capture on supported plarforms (W10+ 2004 / Build 20348 and above)
-            if (ApiInformation.IsTypePresent("Windows.Graphics.Capture.GraphicsCaptureSession") && ApiInformation.IsPropertyPresent("Windows.Graphics.Capture.GraphicsCaptureSession", "IsBorderRequired"))
-            {
-                services.AddWindowsCaptureScreenshots();
-            }
-
-            return services;
         }
 
         private void InitializeLegacyServices(IServiceProvider services)
@@ -108,6 +90,8 @@ namespace WFInfo
             _process = services.GetRequiredService<IProcessFinder>();
             _windowInfo = services.GetRequiredService<IWindowInfoService>();
             _detector = services.GetRequiredService<IHDRDetectorService>();
+            _tesseract = services.GetRequiredService<ITesseractService>();
+            _soundPlayer = services.GetRequiredService<ISoundPlayer>();
 
             dataBase = new Data(ApplicationSettings.GlobalReadonlySettings, _process, _windowInfo);
             SettingsViewModel.Instance.InjectServices(_windowInfo, _process);
@@ -132,7 +116,7 @@ namespace WFInfo
 
                 // Too many dependencies?
                 StatusUpdate("Initializing OCR engine...", 0);
-                OCR.Init(new TesseractService(), new SoundPlayer(), ApplicationSettings.GlobalReadonlySettings, _windowInfo, _detector, _gdiScreenshot, _windowsScreenshot);
+                OCR.Init(_tesseract, _soundPlayer, ApplicationSettings.GlobalReadonlySettings, _windowInfo, _detector, _gdiScreenshot, _windowsScreenshot);
 
                 StatusUpdate("Updating Databases...", 0);
                 dataBase.Update();

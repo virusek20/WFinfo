@@ -1,12 +1,14 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using WFInfo.Services.EncryptedData;
 using WFInfo.Services.HDRDetection;
 using WFInfo.Services.Screenshot;
+using WFInfo.Services.SoundPlayer;
+using WFInfo.Services.Tesseract;
 using WFInfo.Services.WarframeProcess;
 using WFInfo.Services.WindowInfo;
 
 namespace WFInfo.Services
 {
-    // TODO: Convert classes that use these services into services
     public static class ServiceExtensions
     {
         public static void AddGDIScreenshots(this IServiceCollection services)
@@ -46,6 +48,20 @@ namespace WFInfo.Services
             services.AddSingleton<IHDRDetectorService, SchemeHDRDetector>();
         }
 
-        // TODO: Convert old services
+        public static void AddJWTEncryption(this IServiceCollection services)
+        {
+            services.AddSingleton<IEncryptedDataService, EncryptedDataService>();
+            services.AddDataProtection();
+        }
+
+        public static void AddSoundNotification(this IServiceCollection services)
+        {
+            services.AddSingleton<ISoundPlayer, SoundPlayer.SoundPlayer>();
+        }
+
+        public static void AddOCR(this IServiceCollection services)
+        {
+            services.AddSingleton<ITesseractService, TesseractService>();
+        }
     }
 }

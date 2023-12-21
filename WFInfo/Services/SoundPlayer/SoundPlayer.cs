@@ -1,16 +1,11 @@
-using System.IO;
 using System.Reflection;
 
-namespace WFInfo
+namespace WFInfo.Services.SoundPlayer
 {
-    internal interface ISoundPlayer
-    {
-        void Play();
-    }
-
     public class SoundPlayer : ISoundPlayer
     {
         private readonly System.Media.SoundPlayer _player;
+
         public SoundPlayer()
         {
             var assembly = Assembly.GetExecutingAssembly();

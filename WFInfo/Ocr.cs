@@ -14,6 +14,8 @@ using System.Threading.Tasks;
 using Tesseract;
 using WFInfo.Services.HDRDetection;
 using WFInfo.Services.Screenshot;
+using WFInfo.Services.SoundPlayer;
+using WFInfo.Services.Tesseract;
 using WFInfo.Services.WindowInfo;
 using WFInfo.Settings;
 using Brushes = System.Drawing.Brushes;
@@ -140,7 +142,6 @@ namespace WFInfo
         {
             Directory.CreateDirectory(Main.AppPath + @"\Debug");
             _tesseractService = tesseractService;
-            _tesseractService.Init();
             _soundPlayer = soundPlayer;
             _settings = settings;
             _window = window;
@@ -1149,7 +1150,7 @@ namespace WFInfo
 
 
                 //set OCR to numbers only
-                _tesseractService.FirstEngine.SetVariable("tessedit_char_whitelist", "0123456789");
+                _tesseractService.Engines[0].SetVariable("tessedit_char_whitelist", "0123456789");
 
 
                 double widthMultiplier = (_settings.DoCustomNumberBoxWidth ? _settings.SnapItNumberBoxWidth : 0.4);
@@ -1459,7 +1460,7 @@ namespace WFInfo
                         g.DrawRectangle(cyan, cloneRect);
 
                         //do OCR
-                        using (var page = _tesseractService.FirstEngine.Process(cloneBitmap, PageSegMode.SingleLine))
+                        using (var page = _tesseractService.Engines[0].Process(cloneBitmap, PageSegMode.SingleLine))
                         {
                             using (var iterator = page.GetIterator())
                             {
@@ -1500,7 +1501,7 @@ namespace WFInfo
                 }
                 
                 //return OCR to any symbols
-                _tesseractService.FirstEngine.SetVariable("tessedit_char_whitelist", "");
+                _tesseractService.Engines[0].SetVariable("tessedit_char_whitelist", "");
             }
             darkCyan.Dispose();
             red.Dispose();
@@ -1788,8 +1789,8 @@ namespace WFInfo
 
 
                             //do OCR
-                            _tesseractService.FirstEngine.SetVariable("tessedit_char_whitelist", " ABCDEFGHIJKLMNOPQRSTUVWXYZ&");
-                            using (var page = _tesseractService.FirstEngine.Process(cloneBitmap, PageSegMode.SingleLine))
+                            _tesseractService.Engines[0].SetVariable("tessedit_char_whitelist", " ABCDEFGHIJKLMNOPQRSTUVWXYZ&");
+                            using (var page = _tesseractService.Engines[0].Process(cloneBitmap, PageSegMode.SingleLine))
                             {
                                 using (var iterator = page.GetIterator())
                                 {
@@ -1803,7 +1804,7 @@ namespace WFInfo
 
                                 }
                             }
-                            _tesseractService.FirstEngine.SetVariable("tessedit_char_whitelist", "");
+                            _tesseractService.Engines[0].SetVariable("tessedit_char_whitelist", "");
                         }
                     }
                     if (nextYCounter >= 0)
